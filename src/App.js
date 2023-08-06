@@ -8,22 +8,32 @@ import MarkerClusterGroup from "react-leaflet-markercluster";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-const App = () => {
-  const [center, setCenter] = useState([28.3949, 84.124]);
-  const zoom = 7;
+// Constants
+const OPEN_STREET_MAP_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-  const customIcon = L.icon({
-    iconUrl: markerIcon,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [0, -41],
-    shadowUrl: markerShadow,
-    shadowSize: [41, 41],
-    shadowAnchor: [13, 41],
-  });
+// Custom icon
+const customIcon = L.icon({
+  iconUrl: markerIcon,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [0, -41],
+  shadowUrl: markerShadow,
+  shadowSize: [41, 41],
+  shadowAnchor: [13, 41],
+});
+
+// HospitalMarker component
+const HospitalMarker = ({ hospital }) => (
+  <Marker position={hospital.location} icon={customIcon}>
+    <Popup>{hospital.name}</Popup>
+  </Marker>
+);
+
+// Geolocation hook
+const useGeolocation = () => {
+  const [center, setCenter] = useState([28.3949, 84.124]);
 
   useEffect(() => {
-    // Get user's current position using geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -38,6 +48,13 @@ const App = () => {
       console.error("Geolocation is not supported by this browser.");
     }
   }, []);
+
+  return center;
+};
+
+const App = () => {
+  const center = useGeolocation();
+  const zoom = 7;
 
   const hospitals = [
     {
@@ -55,13 +72,11 @@ const App = () => {
 
   return (
     <MapContainer center={center} zoom={zoom} style={{ height: "100vh", width: "100%" }}>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="OpenStreetMap" />
+      <TileLayer url={OPEN_STREET_MAP_URL} attribution="OpenStreetMap" />
 
       <MarkerClusterGroup>
         {hospitals.map((hospital) => (
-          <Marker key={hospital.id} position={hospital.location} icon={customIcon}>
-            <Popup>{hospital.name}</Popup>
-          </Marker>
+          <HospitalMarker key={hospital.id} hospital={hospital} />
         ))}
       </MarkerClusterGroup>
     </MapContainer>
